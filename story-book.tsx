@@ -5,15 +5,21 @@ const apiKey = ""; // Running in environment with pre-configured key
 
 const MAX_STEPS_LIMIT = 20;
 
-const ART_STYLES = [
-  'Photorealistic', 
-  'Watercolor', 
-  'Western Comic', 
-  'Anime', 
-  'Flat Design', 
-  'Surrealist', 
-  'Gouache Illustration', 
-  'Native American Art'
+const STYLES = [
+  { id: 'baseline', name: 'Original / Baseline', suffix: '' },
+  { id: 'photorealism', name: 'Photorealism', suffix: 'photorealistic, 8k resolution, highly detailed, realistic textures, sharp focus' },
+  { id: 'ghibli', name: 'Ghibli-inspired', suffix: 'Studio Ghibli style, hand-drawn animation, lush landscapes, Hayao Miyazaki aesthetic, vibrant and whimsical' },
+  { id: 'watercolor', name: 'Watercolor', suffix: 'watercolor painting, soft edges, wet-on-wet technique, bleeding colors, artistic paper texture' },
+  { id: 'storybook', name: 'Storybook', suffix: 'children’s storybook illustration, whimsical, colorful, folk art style, charming' },
+  { id: 'ue5', name: 'Unreal Engine 5', suffix: 'Unreal Engine 5 render, ray tracing, global illumination, ultra-detailed 3D, octane render' },
+  { id: 'claymation', name: 'Claymation', suffix: 'claymation style, plasticine texture, stop-motion look, handcrafted, fingerprints in clay' },
+  { id: 'western-comic', name: 'Western Comic', suffix: 'Western comic book style, bold ink lines, dynamic action, vintage comic aesthetic, halftone dots, vibrant colors' },
+  { id: 'anime', name: 'Anime', suffix: 'modern anime style, high-quality Japanese animation, expressive characters, vibrant scenery, cel-shaded, sharp details' },
+  { id: 'flat-design', name: 'Flat Design', suffix: 'flat design illustration, minimalist, bold geometric shapes, clean solid colors, no gradients, 2D vector style' },
+  { id: 'surrealist', name: 'Surrealist', suffix: 'surrealist art, dreamlike atmosphere, Salvador Dali inspired, bizarre juxtapositions, melting objects, impossible geometry' },
+  { id: 'gouache', name: 'Gouache Illustration', suffix: 'gouache illustration, opaque matte colors, visible brush strokes, rich texture, artistic hand-painted feel' },
+  { id: 'native-american-art', name: 'Native American Art', suffix: 'Native American art style, tribal patterns, geometric motifs, earthy tones, symbolic imagery, inspired by indigenous traditions' },
+  { id: 'russian-kids-book', name: 'Russian Kids Book', suffix: 'classic Russian children’s book illustration style, Soviet animation aesthetic, folk art, Ivan Bilibin inspired, rich ornamental patterns, traditional gouache textures' },
 ];
 
 const TRANSLATIONS = {
@@ -65,7 +71,7 @@ const App = () => {
     language: "Hebrew",
     maxSteps: 10,
     extraDetails: "",
-    artStyle: "Watercolor"
+    artStyle: "watercolor"
   });
 
   const [themes, setThemes] = useState([]);
@@ -98,8 +104,10 @@ const App = () => {
     }
   };
 
+  const selectedStyle = STYLES.find(s => s.id === config.artStyle) || STYLES[0];
+
   const generateThemesPrompt = () => `You are a story architect. The user wants to play an interactive story about "${config.topic}". 
-Style: ${config.artStyle}. 
+Style: ${selectedStyle.name}. 
 Additional user preferences: "${config.extraDetails}".
 
 Tasks:
@@ -112,7 +120,7 @@ Output must be in valid JSON format.`;
   const generateStoryPrompt = (factsHistory, currentThemes, currentGoal, summary) => `You are an AI storyteller for children. 
 Theme: ${config.topic}. 
 Language: ${config.language}. 
-Visual Style: ${config.artStyle}.
+Visual Style: ${selectedStyle.name} (${selectedStyle.suffix}).
 
 Context:
 - Themes: [${currentThemes.join(', ')}]
@@ -122,7 +130,7 @@ Context:
 Storytelling Guidelines:
 1. MERGE WITH THEME: Pick one background theme and integrate it.
 2. CONSEQUENCE: Decisions must have logical outcomes based on environmental clues.
-3. VISUAL CONSISTENCY: Maintain the look of the ${config.artStyle} style based on visual history.
+3. VISUAL CONSISTENCY: Maintain the look of the ${selectedStyle.name} style.
 4. FLEXIBLE ENDING: Conclude early if the goal is met or fails.
 5. MAX PAGES: Do not exceed ${config.maxSteps}.
 
@@ -204,7 +212,7 @@ Return ONLY JSON.`;
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            instances: { prompt: `${result.imagePrompt} in ${config.artStyle} style. Detailed, consistent characters, full scene.` },
+            instances: { prompt: `${result.imagePrompt}. ${selectedStyle.suffix}. Detailed, consistent characters, full scene.` },
             parameters: { sampleCount: 1 }
           })
         }
@@ -322,8 +330,8 @@ Return ONLY JSON.`;
                   value={config.artStyle}
                   onChange={(e) => setConfig({...config, artStyle: e.target.value})}
                 >
-                  {ART_STYLES.map(style => (
-                    <option key={style} value={style}>{style}</option>
+                  {STYLES.map(style => (
+                    <option key={style.id} value={style.id}>{style.name}</option>
                   ))}
                 </select>
               </div>
@@ -387,7 +395,7 @@ Return ONLY JSON.`;
              {t.step} {pages.length} {t.of} {config.maxSteps}
            </span>
            <span className="opacity-60 font-bold flex items-center gap-1">
-             <Palette className="w-3 h-3" /> {config.artStyle} • {config.topic}
+             <Palette className="w-3 h-3" /> {selectedStyle.name} • {config.topic}
            </span>
         </div>
       </header>
